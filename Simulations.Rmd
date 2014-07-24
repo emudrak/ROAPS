@@ -11,26 +11,87 @@ N0=5, r=0.06
 
 
 Population growth over random period of years (uniform distrib 0 to 100 yrs since last disturbance)
-1- density independent 
-  Nt=N0exp(rt)
-  N0=5, r=0.06, t~Unif(0,100)
-2- density dependent K=100
-  Nt=(K*N0exp(rt))/(K+N(exp(rt)-1))
-3- K flucturates K~unif(1,100)
+
+* Item 1
+* Item 2
+    + Item 2a
+    + Item 2b
+    
+
+
+* density independent, fixed r
+    + Nt = N0exp(rt)  
+    + N0 = 5, r = 0.06, t~Unif(0,100)  
+* density dependent - fixed K, fixed r
+    + Nt=(K*N0exp(rt))/(K+N0(exp(rt)-1))  
+    + N0=5, r=0.06, t~Unif(0,100) K=100  
+* Random K, fixed r
+    + Nt=(K*N0exp(rt))/(K+N0(exp(rt)-1))
+    + N0=5, r=0.06, t~Unif(0,100) K~unif(1,100)
+* Random K, random r
+    + Nt=(K*N0exp(rt))/(K+N0(exp(rt)-1))
+    + N0=5, r~unif(0.01, 0.1), t~Unif(0,100) K~unif(1,100)
 
 
 
+```{r Model}
+
+NUMSITES=100
+r=0.06
+N0=5
+t=runif(NUMSITES, 0,100)
+
+DensInd=round(N0*exp(r*t))
+
+K=100
+
+ConstK=round((K*N0*exp(r*t))/(K+N0*(exp(r*t)-1)))
+
+k_rand=runif(NUMSITES, 1,100)
+RandK=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
 
 
+r_rand=runif(NUMSITES, 0.01, 0.1)
+RandKr=round((k_rand*N0*exp(r_rand*t))/(k_rand+N0*(exp(r_rand*t)-1)))
 
-```{r}
-summary(cars)
 ```
 
 You can also embed plots, for example:
 
-```{r, echo=FALSE}
-plot(cars)
+```{r plotting, echo=FALSE}
+
+RankCurve=function(x)  cbind(Rank=1:length(x), Abund=sort(x, decreasing=T))
+
+MaxAbund=max(DensInd, ConstK, RandK, RandKr)
+  
+plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance")
+lines(RankCurve(DensInd), col="red")
+lines(RankCurve(ConstK), col="green")
+lines(RankCurve(RandK),col="blue")
+lines(RankCurve(RandKr), col="orange")
+
+REPS=100
+NUMSITES=100
+r=0.06
+N0=5
+K=100
+
+for (i in 1:REPS){
+t=runif(NUMSITES, 0,100)
+DensInd=round(N0*exp(r*t))
+ConstK=round((K*N0*exp(r*t))/(K+N0*(exp(r*t)-1)))
+k_rand=runif(NUMSITES, 1,100)
+RandK=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+r_rand=runif(NUMSITES, 0.01, 0.1)
+RandKr=round((k_rand*N0*exp(r_rand*t))/(k_rand+N0*(exp(r_rand*t)-1)))
+lines(RankCurve(DensInd), col="red")
+lines(RankCurve(ConstK), col="green")
+lines(RankCurve(RandK),col="blue")
+lines(RankCurve(RandKr), col="orange")
+
+
+}
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
