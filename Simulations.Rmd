@@ -1,74 +1,81 @@
 ---
 title: "ROAPS K simulations"
 author: "Erika Mudrak"
-date: "Wednesday, July 23, 2014"
-output: html_document
+output: pdf_document
 ---
 
-Simulations of theoretical models
-
-N0=5, r=0.06
-
-
-Population growth over random period of years (uniform distrib 0 to 100 yrs since last disturbance)
-
-* Item 1
-* Item 2
-    + Item 2a
-    + Item 2b
-    
-
+Simulations of theoretical models- Population growth over random period of years (uniform distrib 0 to 100 yrs since last disturbance)
 
 * density independent, fixed r
-    + Nt = N0exp(rt)  
+    + $N_{t} = N_{0}e^{rt}$
     + N0 = 5, r = 0.06, t~Unif(0,100)  
 * density dependent - fixed K, fixed r
-    + Nt=(K*N0exp(rt))/(K+N0(exp(rt)-1))  
+    + $N_{t} = \frac{KN_{0}e^{rt}}{K+N_{0}(e^{rt}-1)}$
     + N0=5, r=0.06, t~Unif(0,100) K=100  
 * Random K, fixed r
-    + Nt=(K*N0exp(rt))/(K+N0(exp(rt)-1))
-    + N0=5, r=0.06, t~Unif(0,100) K~unif(1,100)
+    + $N_{t} = \frac{KN_{0}e^{rt}}{K+N_{0}(e^{rt}-1)}$)
+    + N0=5, r=0.06, t~Unif(0,100) K~Unif(1,100)
 * Random K, random r
-    + Nt=(K*N0exp(rt))/(K+N0(exp(rt)-1))
-    + N0=5, r~unif(0.01, 0.1), t~Unif(0,100) K~unif(1,100)
+    + $N_{t} = \frac{KN_{0}e^{rt}}{K+N_{0}(e^{rt}-1)}$
+    + N0=5, r~unif(0.02, 0.1), t~Unif(0,100) K~Unif(1,100)
 
+------------
 
-
+Code to produce communities
 ```{r Model}
 
-NUMSITES=100
-r=0.06
-N0=5
-t=runif(NUMSITES, 0,100)
+NUMSITES=100                  # Generate abundances for 100 sites
+r=0.06                        # Set constant r 
+N0=5                          # Set Initial pop size
+t=runif(NUMSITES, 0,100)      # 100 different values of t ranging from 0 to 100
 
-DensInd=round(N0*exp(r*t))
+# Density Independent Model
+DensInd=round(N0*exp(r*t))    # 100 different abundances
 
-K=100
-
+# Density Dependent Model
+K=100                         # Set constant K
 ConstK=round((K*N0*exp(r*t))/(K+N0*(exp(r*t)-1)))
 
-k_rand=runif(NUMSITES, 1,100)
+# Random K Model
+k_rand=runif(NUMSITES, 1,100) # 100 random values for k
 RandK=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
 
-
-r_rand=runif(NUMSITES, 0.01, 0.1)
+# Random K and r Model
+r_rand=runif(NUMSITES, 0.02, 0.1) # 100 random values for r
 RandKr=round((k_rand*N0*exp(r_rand*t))/(k_rand+N0*(exp(r_rand*t)-1)))
 
 ```
 
-You can also embed plots, for example:
+\newpage
 
-```{r plotting, echo=FALSE}
+Plot a single curve set of ROAPs
 
-RankCurve=function(x)  cbind(Rank=1:length(x), Abund=sort(x, decreasing=T))
+```{r plotting, echo=FALSE, fig.height=4, fig.width=6}
+# Make a function to arrange list in plotting form
+RankCurve=function(x)  {
+  x=as.matrix(x)
+  cbind(Rank=1:length(x), Abund=sort(x, decreasing=T))
+  }
+
+par(mar=c(5,4,1,2)+0.1)
+
 
 MaxAbund=max(DensInd, ConstK, RandK, RandKr)
   
 plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance")
 lines(RankCurve(DensInd), col="red")
-lines(RankCurve(ConstK), col="green")
+lines(RankCurve(ConstK), col="darkgreen")
 lines(RankCurve(RandK),col="blue")
 lines(RankCurve(RandKr), col="orange")
+
+text(c(60, 35, 35, 20), c(500, 100, 50, 20), c("Density Independent", "Fixed K","Random K", "Random K and r"), col=c("red","darkgreen","blue","orange"))
+
+```
+
+Repeat this process 100 times to make 100 generated metacommunities (1 ROAP each)
+
+```{r, echo=FALSE, fig.height=4, fig.width=6}
+
 
 REPS=100
 NUMSITES=100
@@ -76,22 +83,65 @@ r=0.06
 N0=5
 K=100
 
+allDensInd=allConstK=allRandK=allRandKr=data.frame(matrix(NA, nrow=NUMSITES, ncol=REPS))
+names(allDensInd)=names(allConstK)=names(allRandK)=names(allRandKr)=paste("Rep", 1:REPS)
+
+par(mar=c(5,4,1,2)+0.1)
+MaxAbund=max(DensInd, ConstK, RandK, RandKr)
+plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance")  
+
 for (i in 1:REPS){
 t=runif(NUMSITES, 0,100)
-DensInd=round(N0*exp(r*t))
-ConstK=round((K*N0*exp(r*t))/(K+N0*(exp(r*t)-1)))
+allDensInd[i]=round(N0*exp(r*t))
+allConstK[i]=round((K*N0*exp(r*t))/(K+N0*(exp(r*t)-1)))
 k_rand=runif(NUMSITES, 1,100)
-RandK=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
-r_rand=runif(NUMSITES, 0.01, 0.1)
-RandKr=round((k_rand*N0*exp(r_rand*t))/(k_rand+N0*(exp(r_rand*t)-1)))
-lines(RankCurve(DensInd), col="red")
-lines(RankCurve(ConstK), col="green")
-lines(RankCurve(RandK),col="blue")
-lines(RankCurve(RandKr), col="orange")
-
-
+allRandK[i]=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+r_rand=runif(NUMSITES, 0.02, 0.1)
+allRandKr[i]=round((k_rand*N0*exp(r_rand*t))/(k_rand+N0*(exp(r_rand*t)-1)))
+lines(RankCurve(allDensInd[i]), col="red")
+lines(RankCurve(allConstK[i]), col="darkgreen")
+lines(RankCurve(allRandK[i]),col="blue")
+lines(RankCurve(allRandKr[i]), col="orange")
 }
+
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+\newpage
+
+Plot filled envelopes instead of indivudual lines.  Here, we show the min and max of all simulated communities (though we could show 5% and 95%).
+
+Since the Random K and the Random K and R models overlap so much, I'm not sure how to do this. Especially in black and white. Suggestions?
+
+```{r envelopes, echo=FALSE}
+
+RankEnvelope=function(x){
+  xsort=apply(x, 2, sort, decreasing=T)
+  xmax=apply(xsort,1, max)
+  xmin=apply(xsort,1, min)
+  return(data.frame(max=xmax, min=xmin))
+}
+
+par(mar=c(5,4,1,2)+0.1)
+MaxAbund=max(allDensInd, allConstK, allRandK, allRandKr)
+plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance") 
+
+# lines(RankCurve(RankEnvelope(allDensInd)$min), col="red")
+# lines(RankCurve(RankEnvelope(allDensInd)$max), col="red")
+# lines(RankCurve(RankEnvelope(allConstK)$min), col="darkgreen")
+# lines(RankCurve(RankEnvelope(allConstK)$max), col="darkgreen")
+# lines(RankCurve(RankEnvelope(allRandK)$min), col="blue")
+# lines(RankCurve(RankEnvelope(allRandK)$max), col="blue")
+# lines(RankCurve(RankEnvelope(allRandKr)$min), col="orange")
+# lines(RankCurve(RankEnvelope(allRandKr)$max), col="orange")
+
+polygon(rbind(RankCurve(RankEnvelope(allDensInd)$max), apply(RankCurve(RankEnvelope(allDensInd)$min),2,rev)), col=adjustcolor("red", alpha.f=0.6))
+polygon(rbind(RankCurve(RankEnvelope(allConstK)$max), apply(RankCurve(RankEnvelope(allConstK)$min),2,rev)), col=adjustcolor("green", alpha.f=0.6))
+polygon(rbind(RankCurve(RankEnvelope(allRandK)$max), apply(RankCurve(RankEnvelope(allRandK)$min),2,rev)), col=adjustcolor("blue", alpha.f=0.6))
+polygon(rbind(RankCurve(RankEnvelope(allRandKr)$max), apply(RankCurve(RankEnvelope(allRandKr)$min),2,rev)), col=adjustcolor("orange", alpha.f=0.6))
+
+
+
+
+```
+
