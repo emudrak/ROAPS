@@ -1,7 +1,7 @@
 ---
 title: "ROAPS K simulations"
 author: "Erika Mudrak"
-output: pdf_document
+output: html_document
 ---
 
 Simulations of theoretical models- Population growth over random period of years (uniform distrib 0 to 100 yrs since last disturbance)
@@ -117,11 +117,15 @@ Since the Random K and the Random K and R models overlap so much, I'm not sure h
 
 RankEnvelope=function(x){
   xsort=apply(x, 2, sort, decreasing=T)
-  xmax=apply(xsort,1, max)
-  xmin=apply(xsort,1, min)
+  xmax=apply(xsort,1, quantile, probs=0.95)
+  xmin=apply(xsort,1, quantile, probs=0.05)
   return(data.frame(max=xmax, min=xmin))
 }
 
+
+
+
+tiff("MS/Envelopes.tiff",  600, 450)
 par(mar=c(5,4,1,2)+0.1)
 MaxAbund=max(allDensInd, allConstK, allRandK, allRandKr)
 plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance") 
@@ -138,7 +142,98 @@ plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab
 polygon(rbind(RankCurve(RankEnvelope(allDensInd)$max), apply(RankCurve(RankEnvelope(allDensInd)$min),2,rev)), col=adjustcolor("red", alpha.f=0.6))
 polygon(rbind(RankCurve(RankEnvelope(allConstK)$max), apply(RankCurve(RankEnvelope(allConstK)$min),2,rev)), col=adjustcolor("green", alpha.f=0.6))
 polygon(rbind(RankCurve(RankEnvelope(allRandK)$max), apply(RankCurve(RankEnvelope(allRandK)$min),2,rev)), col=adjustcolor("blue", alpha.f=0.6))
-polygon(rbind(RankCurve(RankEnvelope(allRandKr)$max), apply(RankCurve(RankEnvelope(allRandKr)$min),2,rev)), col=adjustcolor("orange", alpha.f=0.6))
+# polygon(rbind(RankCurve(RankEnvelope(allRandKr)$max), apply(RankCurve(RankEnvelope(allRandKr)$min),2,rev)), col=adjustcolor("orange", alpha.f=0.6))
+
+text(c(60, 20, 35), c(500, 150, 15), c("Density Independent", "Fixed K","Random K"), col=c("red","darkgreen","blue"))
+
+dev.off()
+
+mean(apply(allDensInd,2, var))
+mean(apply(allDensInd,2, function(x){sd(x)/length(x)}))
+mean(apply(allDensInd,2, function(x){var(log(x))}))
+mean(apply(allDensInd,2, function(x){sd(log(x))/length(x)}))
+
+mean(apply(allConstK,2, var))
+mean(apply(allConstK,2, function(x){sd(x)/length(x)}))
+mean(apply(allConstK,2, function(x){var(log(x))}))
+mean(apply(allConstK,2, function(x){sd(log(x))/length(x)}))
+
+
+mean(apply(allRandK,2, var))
+mean(apply(allRandK,2, function(x){sd(x)/length(x)}))
+mean(apply(allRandK,2, function(x){var(log(x))}))
+mean(apply(allRandK,2, function(x){sd(log(x))/length(x)}))
+```
+
+
+Consider varying levels of r, but fixed for each curve, reflecting different biology traits of the species. It seems like the slope of the ROAP reflects r
+
+```{r levels of fixed r}
+
+# Random K Model
+
+k_rand=runif(NUMSITES, 1,100) # 100 random values for k
+
+r=0.008
+Sp1=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+r=0.02
+Sp2=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+r=0.08
+Sp3=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+
+r=1
+Sp4=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+par(mar=c(5,4,1,2)+0.1)
+
+
+MaxAbund=max(Sp1, Sp2, Sp3, Sp4)
+  
+plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance")
+lines(RankCurve(Sp1), col="red")
+lines(RankCurve(Sp2), col="darkgreen")
+lines(RankCurve(Sp3),col="blue")
+lines(RankCurve(Sp4), col="orange")
+
+
+```
+
+Draw K from unif(1,100), but then multiply by a constant- affects y intercept
+
+```{r levels of fixed K}
+
+
+# Random K Model
+r=0.06
+k_univ=runif(NUMSITES, 1,100) # 100 random values for k
+
+
+k_rand=0.2*k_univ
+Sp1=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+k_rand=0.4*k_univ
+Sp2=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+k_rand=0.8*k_univ
+Sp3=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+
+k_rand=1.2*k_univ
+Sp4=round((k_rand*N0*exp(r*t))/(k_rand+N0*(exp(r*t)-1)))
+
+par(mar=c(5,4,1,2)+0.1)
+
+
+MaxAbund=max(Sp1, Sp2, Sp3, Sp4)
+  
+plot(c(1,NUMSITES),c(1,MaxAbund),pch=NA, main=NA, ylab="Abundance",log="y", xlab="Rank Abundance")
+lines(RankCurve(Sp1), col="red")
+lines(RankCurve(Sp2), col="darkgreen")
+lines(RankCurve(Sp3),col="blue")
+lines(RankCurve(Sp4), col="orange")
 
 
 
